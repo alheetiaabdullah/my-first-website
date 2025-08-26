@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Penalty Kick Game</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #3a9d23;
+    }
+    canvas {
+      background: #4CAF50;
+      border: 2px solid #fff;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Ball settings
+    let ball = { x: 400, y: 450, radius: 10, speedX: 0, speedY: 0, isMoving: false };
+
+    // Goalie settings
+    let goalie = { x: 350, y: 100, width: 100, height: 20, speed: 4 };
+
+    // Game state
+    let gameOver = false;
+
+    // Draw goal area
+    function drawGoal() {
+      ctx.fillStyle = "white";
+      ctx.fillRect(200, 80, 400, 20); // crossbar
+      ctx.fillRect(200, 80, 20, 100); // left post
+      ctx.fillRect(580, 80, 20, 100); // right post
+    }
+
+    // Draw goalie
+    function drawGoalie() {
+      ctx.fillStyle = "blue";
+      ctx.fillRect(goalie.x, goalie.y, goalie.width, goalie.height);
+    }
+
+    // Draw ball
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "white";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    // Move goalie randomly
+    function moveGoalie() {
+      goalie.x += goalie.speed;
+      if (goalie.x + goalie.width > 580 || goalie.x < 200) {
+        goalie.speed *= -1;
+      }
+    }
+
+    // Update ball position
+    function moveBall() {
+      if (ball.isMoving) {
+        ball.x += ball.speedX;
+        ball.y += ball.speedY;
+
+        // Check goal line
+        if (ball.y <= 100) {
+          // Check collision with goalie
+          if (ball.x > goalie.x && ball.x < goalie.x + goalie.width) {
+            alert("Saved by the goalie!");
+          } else {
+            alert("GOAL!!!");
+          }
+          resetGame();
+        }
+      }
+    }
+
+    // Reset game
+    function resetGame() {
+      ball.x = 400;
+      ball.y = 450;
+      ball.speedX = 0;
+      ball.speedY = 0;
+      ball.isMoving = false;
+      gameOver = false;
+    }
+
+    // Kick the ball towards where you clicked
+    canvas.addEventListener("click", function (e) {
+      if (!ball.isMoving) {
+        let rect = canvas.getBoundingClientRect();
+        let mouseX = e.clientX - rect.left;
+        let mouseY = e.clientY - rect.top;
+
+        // Calculate direction
+        let dx = mouseX - ball.x;
+        let dy = mouseY - ball.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Normalize speed
+        ball.speedX = (dx / distance) * 5;
+        ball.speedY = (dy / distance) * 5;
+        ball.isMoving = true;
+      }
+    });
+
+    // Main loop
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGoal();
+      drawGoalie();
+      drawBall();
+      moveGoalie();
+      moveBall();
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
