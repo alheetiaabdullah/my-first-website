@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StudyFlow — Planner + Flashcards</title>
+  <meta name="description" content="A lightweight study planner with Pomodoro timer and spaced-repetition flashcards. All in one file. Data stays in your browser.">
+  <style>
+    :root{
+      --bg:#0b1020;--panel:#12182b;--muted:#9aa4b2;--fg:#e8edf4;--accent:#7c5cff;--accent2:#23c483;--border:#1e2a46;--danger:#ef4444
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 600px at 10% 10%,#0c1430 0,var(--bg) 55%);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    header{padding:1.5rem 1rem 0;text-align:center}
+    h1{margin:0;font-size:clamp(1.4rem,2.5vw+1rem,2.4rem)}
+    .subtitle{color:var(--muted);margin:.25rem auto 1rem;max-width:70ch}
+    .shell{max-width:1100px;margin:0 auto 3rem;padding:0 1rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));border:1px solid var(--border);border-radius:16px;padding:1rem;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .card h2{margin:.2rem 0 1rem;font-size:1.1rem}
+    label{display:block;margin:.35rem 0 .25rem;font-weight:600}
+    input,select,button,textarea{font:inherit}
+    input,select,textarea{width:100%;background:#0b1226;border:1px solid var(--border);color:var(--fg);border-radius:10px;padding:.65rem .75rem}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:#5873ff;box-shadow:0 0 0 4px rgba(120,130,255,.15)}
+    textarea{min-height:80px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+    .row3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:.6rem}
+    .btn{cursor:pointer;border:1px solid var(--border);background:#0b1226;color:var(--fg);padding:.6rem .9rem;border-radius:12px}
+    .btn:hover{border-color:#38507f}
+    .btn.primary{background:linear-gradient(180deg,var(--accent),#5f40ff);border-color:transparent;color:#fff;font-weight:700}
+    .btn.ghost{background:transparent}
+    .muted{color:var(--muted)}
+    .list{display:grid;gap:.5rem;margin-top:.75rem}
+    .item{border:1px dashed var(--border);border-radius:12px;padding:.6rem}
+    .item small{color:var(--muted)}
+    .flex{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--border);background:#0b1226;border-radius:999px;padding:.25rem .55rem}
+    .danger{color:#ffd0d0}
+    .center{text-align:center}
+    .right{text-align:right}
+    .timer{font-size:2rem;font-weight:800;letter-spacing:.5px}
+    .kbd{display:inline-block;border:1px solid var(--border);border-bottom-width:3px;background:#0b1226;border-radius:8px;padding:.15rem .4rem}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📚 StudyFlow</h1>
+    <p class="subtitle">Minimal study planner with Pomodoro timer + spaced‑repetition flashcards. <b>Everything saves locally</b>—refresh safe.</p>
+  </header>
+
+  <main class="shell">
+    <section class="grid">
+      <!-- Planner -->
+      <div class="card" id="planner">
+        <h2>🗓️ Planner</h2>
+        <div class="row3">
+          <div>
+            <label>Subject</label>
+            <input id="pSubject" placeholder="e.g., Biology" />
+          </div>
+          <div>
+            <label>Topic</label>
+            <input id="pTopic" placeholder="e.g., Cell respiration" />
+          </div>
+          <div>
+            <label>Due</label>
+            <input id="pDue" type="date" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:.5rem;align-items:end">
+          <div>
+            <label>Est. minutes</label>
+            <input id="pMins" type="number" min="5" step="5" placeholder="30" />
+          </div>
+          <div class="right">
+            <button class="btn primary" id="addTaskBtn">Add Task</button>
+          </div>
+        </div>
+
+        <div class="flex" style="margin-top:.75rem;justify-content:space-between">
+          <div class="muted" id="taskCount"></div>
+          <div class="flex">
+            <button class="btn" id="planTodayBtn" title="Build a ~90‑min plan">Generate Plan for Today</button>
+            <button class="btn ghost" id="clearTasksBtn" title="Delete all tasks">Clear</button>
+          </div>
+        </div>
+
+        <div class="list" id="taskList" aria-live="polite"></div>
+
+        <h3 style="margin-top:1rem">📅 Today’s Plan</h3>
+        <div id="todayPlan" class="list"></div>
+      </div>
+
+      <!-- Pomodoro -->
+      <div class="card" id="pomodoro">
+        <h2>⏱️ Focus Timer</h2>
+        <div class="center">
+          <div class="timer" id="timer">25:00</div>
+          <div class="muted" id="mode">Focus (25m)</div>
+          <div class="flex" style="justify-content:center;margin-top:.5rem">
+            <button class="btn primary" id="startBtn">Start</button>
+            <button class="btn" id="pauseBtn">Pause</button>
+            <button class="btn ghost" id="resetBtn">Reset</button>
+          </div>
+          <div class="muted" style="margin-top:.5rem">Tip: Press <span class="kbd">Space</span> to Start/Pause</div>
+        </div>
+      </div>
+
+      <!-- Flashcards -->
+      <div class="card" id="flashcards">
+        <h2>🧠 Flashcards</h2>
+        <div class="row">
+          <div>
+            <label>Front (Question)</label>
+            <textarea id="fcFront" placeholder="e.g., State the 1st Law of Thermodynamics."></textarea>
+          </div>
+          <div>
+            <label>Back (Answer)</label>
+            <textarea id="fcBack" placeholder="e.g., Energy cannot be created or destroyed..."></textarea>
+          </div>
+        </div>
+        <div class="right" style="margin-top:.5rem">
+          <button class="btn primary" id="addCardBtn">Add Card</button>
+        </div>
+
+        <div class="flex" style="justify-content:space-between;margin-top:.75rem">
+          <div class="muted" id="deckStats">0 cards · 0 due</div>
+          <div class="flex">
+            <button class="btn" id="studyBtn">Study Due</button>
+            <button class="btn ghost" id="clearDeckBtn">Clear</button>
+          </div>
+        </div>
+
+        <div id="studyArea" style="margin-top:.75rem"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ---------- Storage helpers ----------
+    const LS = {
+      get: (k, d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d)),
+      set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+    };
+
+    // ---------- Planner ----------
+    let tasks = LS.get('sf_tasks', []);
+    const $ = s => document.querySelector(s);
+    const el = {
+      subj: $('#pSubject'), topic: $('#pTopic'), due: $('#pDue'), mins: $('#pMins'),
+      addTask: $('#addTaskBtn'), list: $('#taskList'), clear: $('#clearTasksBtn'),
+      count: $('#taskCount'), planToday: $('#planTodayBtn'), todayPlan: $('#todayPlan')
+    };
+
+    function addTask(){
+      const t = {
+        id: crypto.randomUUID(),
+        subject: el.subj.value.trim()||'General',
+        topic: el.topic.value.trim()||'Untitled',
+        due: el.due.value ? new Date(el.due.value).getTime() : Date.now()+86400000,
+        mins: Math.max(5, +el.mins.value||30),
+        done:false
+      };
+      tasks.push(t); LS.set('sf_tasks', tasks); renderTasks();
+      el.subj.value = el.topic.value = el.mins.value = ''; el.due.value='';
+    }
+
+    function delTask(id){ tasks = tasks.filter(x=>x.id!==id); LS.set('sf_tasks', tasks); renderTasks(); }
+    function toggleDone(id){ const t = tasks.find(x=>x.id===id); if(t){ t.done=!t.done; LS.set('sf_tasks',tasks); renderTasks(); } }
+
+    function renderTasks(){
+      const now = Date.now();
+      const sorted = [...tasks].sort((a,b)=> (a.done-b.done) || (a.due-b.due));
+      el.count.textContent = `${sorted.filter(x=>!x.done).length} open · ${sorted.length} total`;
+      el.list.innerHTML = sorted.map(t=>{
+        const days = Math.ceil((t.due-now)/86400000);
+        const dueTxt = days>=0 ? `${days} day${days!==1?'s':''}` : `${Math.abs(days)} day${Math.abs(days)!==1?'s':''} ago`;
+        return `<div class="item">
+          <div class="flex" style="justify-content:space-between">
+            <div>
+              <b>${escape(t.subject)}</b> — ${escape(t.topic)}
+              <div class="muted">Due in ${dueTxt} · ${t.mins}m</div>
+            </div>
+            <div class="flex">
+              <label class="pill"><input type="checkbox" ${t.done?'checked':''} onchange="toggleDone('${t.id}')"> done</label>
+              <button class="btn ghost danger" onclick="delTask('${t.id}')">Delete</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function generatePlan(){
+      // Greedy: pick earliest due unfinished tasks until ~90 minutes
+      const target = 90; let sum = 0;
+      const plan = [];
+      for(const t of [...tasks].filter(x=>!x.done).sort((a,b)=>a.due-b.due)){
+        if(sum>=target) break; plan.push(t); sum += t.mins;
+      }
+      el.todayPlan.innerHTML = plan.length ? plan.map(t=>`<div class="item">📌 <b>${escape(t.subject)}</b> — ${escape(t.topic)} <small class="muted">(${t.mins}m)</small></div>`).join('') : '<div class="muted">No tasks to plan — add some above.</div>';
+    }
+
+    // ---------- Pomodoro ----------
+    let isRunning=false, mode='focus', secs=25*60, cycle=0, tick=null;
+    const timerEl = $('#timer'), modeEl=$('#mode');
+    const startBtn=$('#startBtn'), pauseBtn=$('#pauseBtn'), resetBtn=$('#resetBtn');
+
+    function fmt(n){return String(n).padStart(2,'0')}
+    function draw(){ timerEl.textContent = `${fmt(Math.floor(secs/60))}:${fmt(secs%60)}`; modeEl.textContent = (mode==='focus'?`Focus (${Math.round(secs/60)}m)`:(mode==='break'?`Break (${Math.round(secs/60)}m)`:'Long Break')); }
+    function switchMode(){
+      if(mode==='focus'){ cycle++; mode = (cycle%4===0)?'long':'break'; secs = (mode==='long'?15:5)*60; }
+      else { mode='focus'; secs=25*60; }
+      draw();
+    }
+    function start(){ if(tick) return; isRunning=true; tick=setInterval(()=>{ if(secs>0){ secs--; draw(); } else { clearInterval(tick); tick=null; new AudioContext().resume().then(()=>{}).catch(()=>{}); switchMode(); start(); } },1000); }
+    function pause(){ if(tick){ clearInterval(tick); tick=null; isRunning=false; }}
+    function reset(){ pause(); mode='focus'; secs=25*60; cycle=0; draw(); }
+
+    document.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); isRunning?pause():start(); }});
+
+    // ---------- Flashcards (SRS-lite) ----------
+    let deck = LS.get('sf_deck', []);
+
+    function addCard(){
+      const front = $('#fcFront').value.trim();
+      const back = $('#fcBack').value.trim();
+      if(!front||!back) return;
+      deck.push({id:crypto.randomUUID(),front,back,ease:2.5,interval:0,due:Date.now()});
+      LS.set('sf_deck', deck); $('#fcFront').value=''; $('#fcBack').value=''; drawDeck();
+    }
+
+    function drawDeck(){
+      const due = deck.filter(c=>c.due<=Date.now()).length;
+      $('#deckStats').textContent = `${deck.length} card${deck.length!==1?'s':''} · ${due} due`;
+    }
+
+    function studyDue(){
+      const due = deck.filter(c=>c.due<=Date.now());
+      const area = $('#studyArea');
+      if(!due.length){ area.innerHTML = '<div class="muted">No cards due. Add more or wait until later.</div>'; return; }
+      // Pick the oldest due
+      const card = due.sort((a,b)=>a.due-b.due)[0];
+      area.innerHTML = `<div class="item">
+        <div id="q">${md(escape(card.front))}</div>
+        <details style="margin-top:.5rem"><summary>Show Answer</summary><div id="a" style="margin-top:.5rem">${md(escape(card.back))}</div></details>
+        <div class="flex" style="margin-top:.6rem;justify-content:space-between">
+          <div class="muted">Grade your recall:</div>
+          <div class="flex">
+            <button class="btn ghost" onclick="grade('${card.id}','again')">Again</button>
+            <button class="btn" onclick="grade('${card.id}','hard')">Hard</button>
+            <button class="btn primary" onclick="grade('${card.id}','good')">Good</button>
+            <button class="btn" onclick="grade('${card.id}','easy')">Easy</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function grade(id,btn){
+      const c = deck.find(x=>x.id===id); if(!c) return;
+      // Simplified SM-2 style adjustments
+      const now = Date.now();
+      if(btn==='again'){ c.ease=Math.max(1.3,c.ease-0.2); c.interval=0; c.due= now + 60*1000; }
+      if(btn==='hard'){ c.ease=Math.max(1.3,c.ease-0.15); c.interval = Math.max(1, Math.round((c.interval||1)*1.2)); c.due = now + c.interval*24*3600*1000; }
+      if(btn==='good'){ c.ease=Math.min(3.0,c.ease+0.0); c.interval = Math.max(1, Math.round((c.interval||1)*c.ease)); c.due = now + c.interval*24*3600*1000; }
+      if(btn==='easy'){ c.ease=Math.min(3.0,c.ease+0.15); c.interval = Math.max(1, Math.round((c.interval||1)*(c.ease+0.5))); c.due = now + c.interval*24*3600*1000; }
+      LS.set('sf_deck', deck); drawDeck(); studyDue();
+    }
+
+    // ---------- Utils ----------
+    function escape(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]))}
+    // Minimal markdown: **bold**, *italic*, `code`
+    function md(s){
+      return s
+        .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+        .replace(/\*(.+?)\*/g,'<i>$1</i>')
+        .replace(/`(.+?)`/g,'<code>$1</code>')
+        .replace(/\n/g,'<br>');
+    }
+
+    // ---------- Wire up ----------
+    $('#addTaskBtn').addEventListener('click', addTask);
+    $('#clearTasksBtn').addEventListener('click', ()=>{ if(confirm('Delete all tasks?')){ tasks=[]; LS.set('sf_tasks',tasks); renderTasks(); el.todayPlan.innerHTML=''; }});
+    $('#planTodayBtn').addEventListener('click', generatePlan);
+
+    $('#startBtn').addEventListener('click', start); $('#pauseBtn').addEventListener('click', pause); $('#resetBtn').addEventListener('click', reset);
+
+    $('#addCardBtn').addEventListener('click', addCard);
+    $('#clearDeckBtn').addEventListener('click', ()=>{ if(confirm('Delete all flashcards?')){ deck=[]; LS.set('sf_deck',deck); drawDeck(); $('#studyArea').innerHTML=''; }});
+    $('#studyBtn').addEventListener('click', studyDue);
+
+    // Expose a couple for inline handlers
+    window.toggleDone = toggleDone; window.delTask = delTask; window.grade = grade;
+
+    // ---------- First paint ----------
+    renderTasks();
+    draw();
+    drawDeck();
+  </script>
+</body>
+</html>
